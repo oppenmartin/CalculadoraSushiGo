@@ -141,6 +141,7 @@ function buildPlayers(names) {
     roundScores: Array(TOTAL_ROUNDS).fill(0),
     roundNotes: Array(TOTAL_ROUNDS).fill(''),
     roundBreakdowns: Array(TOTAL_ROUNDS).fill(''),
+    roundBreakdownItems: Array.from({ length: TOTAL_ROUNDS }, () => []),
     puddings: 0,
     puddingScore: 0,
     subtotal: 0,
@@ -157,6 +158,56 @@ function formatNigiriBreakdown(detail) {
   return detail.withWasabi
     ? `Wasabi + ${label} ${detail.points}pts`
     : `${label} ${detail.points}pts`;
+}
+
+function buildRoundBreakdownItems(cards, result) {
+  if (!cards.length) {
+    return [];
+  }
+
+  const items = [];
+
+  if (result.details.makiCardCount) {
+    items.push({
+      label: `${pluralize(result.details.makiCardCount, 'Maki')} (${pluralize(result.maki, 'roll', 'rolls')})`,
+      points: result.makiPoints,
+      cards: Array(result.details.makiCardCount).fill('maki3')
+    });
+  }
+
+  if (result.details.tempuraPairs) {
+    items.push({
+      label: pluralize(result.details.tempuraPairs * 2, 'tempura'),
+      points: result.details.tempuraPoints,
+      cards: Array(result.details.tempuraPairs * 2).fill('tempura')
+    });
+  }
+
+  if (result.details.sashimiTrios) {
+    items.push({
+      label: pluralize(result.details.sashimiTrios * 3, 'sashimi'),
+      points: result.details.sashimiPoints,
+      cards: Array(result.details.sashimiTrios * 3).fill('sashimi')
+    });
+  }
+
+  if (result.details.gyozaCount) {
+    items.push({
+      label: pluralize(result.details.gyozaCount, 'gyoza'),
+      points: result.details.gyozaPoints,
+      cards: Array(result.details.gyozaCount).fill('gyoza')
+    });
+  }
+
+  result.details.nigiriBreakdown.forEach(detail => {
+    items.push({
+      label: detail.withWasabi ? 'Wasabi + Nigiri' : CARD_DEFS[detail.cardId].label,
+      points: detail.points,
+      cards: detail.withWasabi ? ['wasabi', detail.cardId] : [detail.cardId]
+    });
+  });
+
+  return items.filter(item => item.points > 0);
 }
 
 function buildRoundBreakdown(cards, result) {
@@ -199,6 +250,52 @@ function buildRoundBreakdown(cards, result) {
   }
 
   return `${parts.join(' + ')} = ${result.score}pts`;
+}
+
+function renderBreakdownCardIcons(cardIds) {
+  return cardIds
+    .map(cardId => {
+      const card = CARD_DEFS[cardId];
+      if (!card) {
+        return '';
+      }
+
+      return `
+        <img
+          class="breakdown-card-icon"
+          src="${card.asset}"
+          alt="${escapeHtml(card.label)}"
+        />
+      `;
+    })
+    .join('');
+}
+
+function renderRoundBreakdownHtml(player, index) {
+  const items = (player.roundBreakdownItems && player.roundBreakdownItems[index]) || [];
+  const total = player.roundScores[index] || 0;
+
+  if (!items.length) {
+    return '<span class="breakdown-empty">Sin resumen todavía.</span>';
+  }
+
+  return `
+    <span class="breakdown-flow">
+      ${items
+        .map(
+          item => `
+            <span class="breakdown-item">
+              <span class="breakdown-label">${escapeHtml(item.label)}</span>
+              <span class="breakdown-icons">${renderBreakdownCardIcons(item.cards)}</span>
+              <span class="breakdown-points">${item.points}pts</span>
+            </span>
+          `
+        )
+        .join('<span class="breakdown-separator">+</span>')}
+      <span class="breakdown-separator">=</span>
+      <strong class="breakdown-total">${total}pts</strong>
+    </span>
+  `;
 }
 
 function countCards(cards) {
@@ -310,6 +407,11 @@ function computeScores() {
           .fill('')
           .map((_, index) => player.roundBreakdowns[index] || '')
       : Array(TOTAL_ROUNDS).fill('');
+    player.roundBreakdownItems = Array.isArray(player.roundBreakdownItems)
+      ? Array(TOTAL_ROUNDS)
+          .fill(null)
+          .map((_, index) => player.roundBreakdownItems[index] || [])
+      : Array.from({ length: TOTAL_ROUNDS }, () => []);
     player.roundScores = Array(TOTAL_ROUNDS).fill(0);
     player.puddings = 0;
     player.puddingScore = 0;
@@ -333,6 +435,7 @@ function computeScores() {
       player.roundScores[roundIndex] = result.score;
       player.puddings += result.puddings;
       player.roundBreakdowns[roundIndex] = buildRoundBreakdown(player.roundCards[roundIndex] || [], result);
+      player.roundBreakdownItems[roundIndex] = buildRoundBreakdownItems(player.roundCards[roundIndex] || [], result);
     });
   }
 
@@ -800,9 +903,7 @@ function renderBoard() {
                     .map(
                       (cards, index) => `
                         <p><strong>Ronda ${index + 1}:</strong> ${escapeHtml(formatCards(cards))}</p>
-                        <p><strong>Puntaje:</strong> ${escapeHtml(
-                          (player.roundBreakdowns && player.roundBreakdowns[index]) || 'Sin resumen todavía.'
-                        )}</p>
+                        <p><strong>Puntaje:</strong> ${renderRoundBreakdownHtml(player, index)}</p>
                       `
                     )
                     .join('')}
