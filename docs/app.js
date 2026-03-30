@@ -61,21 +61,21 @@ const CARD_DEFS = {
     aliases: ['wasabi']
   },
   nigiri_egg: {
-    label: 'Nigiri de tortilla',
+    label: 'Nigiri de Tortilla',
     kind: 'nigiri',
     nigiri: 1,
     asset: './assets/nigiri-tortilla.jpeg',
     aliases: ['nigiri de tortilla', 'nigiri tortilla', 'nigiri huevo', 'nigiri egg', 'tortilla', 'huevo']
   },
   nigiri_salmon: {
-    label: 'Nigiri de salmon',
+    label: 'Nigiri de Salmon',
     kind: 'nigiri',
     nigiri: 2,
     asset: './assets/nigiri-salmon.jpeg',
     aliases: ['nigiri de salmon', 'nigiri salmon', 'salmon', 'salmon']
   },
   nigiri_squid: {
-    label: 'Nigiri de calamar',
+    label: 'Nigiri de Calamar',
     kind: 'nigiri',
     nigiri: 3,
     asset: './assets/nigiri-calamar.jpeg',
@@ -160,50 +160,89 @@ function formatNigiriBreakdown(detail) {
     : `${label} ${detail.points}pts`;
 }
 
+function groupNigiriBreakdown(nigiriBreakdown) {
+  const grouped = [];
+
+  nigiriBreakdown.forEach(detail => {
+    const previous = grouped.find(item => item.cardId === detail.cardId && item.withWasabi === detail.withWasabi);
+    if (previous) {
+      previous.count += 1;
+      previous.points += detail.points;
+      return;
+    }
+
+    grouped.push({
+      cardId: detail.cardId,
+      withWasabi: detail.withWasabi,
+      count: 1,
+      points: detail.points
+    });
+  });
+
+  return grouped;
+}
+
 function buildRoundBreakdownItems(cards, result) {
   if (!cards.length) {
     return [];
   }
 
   const items = [];
+  const counts = countCards(cards);
+  const makiCards = [];
+
+  if (counts.maki1) {
+    makiCards.push(...Array(counts.maki1).fill('maki1'));
+  }
+  if (counts.maki2) {
+    makiCards.push(...Array(counts.maki2).fill('maki2'));
+  }
+  if (counts.maki3) {
+    makiCards.push(...Array(counts.maki3).fill('maki3'));
+  }
 
   if (result.details.makiCardCount) {
     items.push({
-      label: `${pluralize(result.details.makiCardCount, 'Maki')} (${pluralize(result.maki, 'roll', 'rolls')})`,
+      label: `Makis (${pluralize(result.maki, 'roll', 'rolls')})`,
       points: result.makiPoints,
-      cards: Array(result.details.makiCardCount).fill('maki3')
+      cards: makiCards,
+      multiplier: 1
     });
   }
 
   if (result.details.tempuraPairs) {
     items.push({
-      label: pluralize(result.details.tempuraPairs * 2, 'tempura'),
+      label: 'Tempura',
       points: result.details.tempuraPoints,
-      cards: Array(result.details.tempuraPairs * 2).fill('tempura')
+      cards: ['tempura', 'tempura'],
+      multiplier: result.details.tempuraPairs
     });
   }
 
   if (result.details.sashimiTrios) {
     items.push({
-      label: pluralize(result.details.sashimiTrios * 3, 'sashimi'),
+      label: 'Sashimi',
       points: result.details.sashimiPoints,
-      cards: Array(result.details.sashimiTrios * 3).fill('sashimi')
+      cards: ['sashimi', 'sashimi', 'sashimi'],
+      multiplier: result.details.sashimiTrios
     });
   }
 
   if (result.details.gyozaCount) {
     items.push({
-      label: pluralize(result.details.gyozaCount, 'gyoza'),
+      label: 'Gyoza',
       points: result.details.gyozaPoints,
-      cards: Array(result.details.gyozaCount).fill('gyoza')
+      cards: ['gyoza'],
+      multiplier: result.details.gyozaCount
     });
   }
 
-  result.details.nigiriBreakdown.forEach(detail => {
+  groupNigiriBreakdown(result.details.nigiriBreakdown).forEach(detail => {
     items.push({
-      label: detail.withWasabi ? 'Wasabi + Nigiri' : CARD_DEFS[detail.cardId].label,
+      label: detail.withWasabi ? `Wasabi + ${CARD_DEFS[detail.cardId].label}` : CARD_DEFS[detail.cardId].label,
       points: detail.points,
-      cards: detail.withWasabi ? ['wasabi', detail.cardId] : [detail.cardId]
+      cards: detail.withWasabi ? ['wasabi', detail.cardId] : [detail.cardId],
+      multiplier: detail.count
     });
   });
 
@@ -253,22 +292,65 @@ function buildRoundBreakdown(cards, result) {
 }
 
 function renderBreakdownCardIcons(cardIds) {
-  return cardIds
-    .map(cardId => {
+  const groupedCards = [];
+
+  cardIds.forEach(cardId => {
+    const previous = groupedCards.find(item => item.cardId === cardId);
+    if (previous) {
+      previous.count += 1;
+      return;
+    }
+
+    groupedCards.push({ cardId, count: 1 });
+  });
+
+  return groupedCards
+    .map(item => {
+      const cardId = item.cardId;
       const card = CARD_DEFS[cardId];
       if (!card) {
         return '';
       }
 
       return `
-        <img
-          class="breakdown-card-icon"
-          src="${card.asset}"
-          alt="${escapeHtml(card.label)}"
-        />
+        <span class="breakdown-icon-group">
+          <img
+            class="breakdown-card-icon"
+            src="${card.asset}"
+            alt="${escapeHtml(card.label)}"
+          />
+          ${item.count > 1 ? `<span class="breakdown-multiplier">x${item.count}</span>` : ''}
+        </span>
       `;
     })
     .join('');
+}
+
+function renderPlayedCardsRow(cards) {
+  if (!cards.length) {
+    return '<span class="breakdown-empty">Sin cartas cargadas.</span>';
+  }
+
+  return `
+    <span class="played-cards-row">
+      ${cards
+        .map(cardId => {
+          const card = CARD_DEFS[cardId];
+          if (!card) {
+            return '';
+          }
+
+          return `
+            <img
+              class="played-card-icon"
+              src="${card.asset}"
+              alt="${escapeHtml(card.label)}"
+            />
+          `;
+        })
+        .join('')}
+    </span>
+  `;
 }
 
 function renderRoundBreakdownHtml(player, index) {
@@ -287,6 +369,7 @@ function renderRoundBreakdownHtml(player, index) {
             <span class="breakdown-item">
               <span class="breakdown-label">${escapeHtml(item.label)}</span>
               <span class="breakdown-icons">${renderBreakdownCardIcons(item.cards)}</span>
+              ${item.multiplier > 1 ? `<span class="breakdown-multiplier">x${item.multiplier}</span>` : ''}
               <span class="breakdown-points">${item.points}pts</span>
             </span>
           `
@@ -899,14 +982,19 @@ function renderBoard() {
               player => `
                 <article class="round-notes-player">
                   <h4>${escapeHtml(player.name)}</h4>
-                  ${player.roundCards
-                    .map(
-                      (cards, index) => `
-                        <p><strong>Ronda ${index + 1}:</strong> ${escapeHtml(formatCards(cards))}</p>
-                        <p><strong>Puntaje:</strong> ${renderRoundBreakdownHtml(player, index)}</p>
-                      `
-                    )
-                    .join('')}
+                  <div class="round-notes-table">
+                    ${player.roundCards
+                      .map(
+                        (cards, index) => `
+                          <div class="round-notes-row">
+                            <div class="round-notes-round">Ronda ${index + 1}</div>
+                            <div class="round-notes-cards">${renderPlayedCardsRow(cards)}</div>
+                            <div class="round-notes-score">${renderRoundBreakdownHtml(player, index)}</div>
+                          </div>
+                        `
+                      )
+                      .join('')}
+                  </div>
                 </article>
               `
             )

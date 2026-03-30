@@ -496,10 +496,46 @@ th {
   margin: 0 0 0.75rem;
 }
 
-.round-notes-player p {
-  margin: 0 0 0.7rem;
+.round-notes-table {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.round-notes-row {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(101, 77, 58, 0.1);
+}
+
+.round-notes-round {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.round-notes-cards,
+.round-notes-score {
   color: var(--muted);
   line-height: 1.5;
+}
+
+.played-cards-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.18rem;
+  align-items: center;
+}
+
+.played-card-icon {
+  width: 22px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(101, 77, 58, 0.1);
+  box-shadow: 0 3px 8px rgba(61, 35, 22, 0.08);
 }
 
 .breakdown-flow {
@@ -536,6 +572,12 @@ th {
   gap: 0.14rem;
 }
 
+.breakdown-icon-group {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.12rem;
+}
+
 .breakdown-card-icon {
   width: 18px;
   height: 26px;
@@ -544,6 +586,12 @@ th {
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(101, 77, 58, 0.12);
   box-shadow: 0 3px 8px rgba(61, 35, 22, 0.08);
+}
+
+.breakdown-multiplier {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
 }
 
 .breakdown-total {
