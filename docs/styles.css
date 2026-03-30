@@ -791,6 +791,28 @@ th {
   }
 
   .card-palette {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid;
+    grid-auto-columns: 104px;
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.2rem;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .card-palette::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .card-palette::-webkit-scrollbar-thumb {
+    background: rgba(101, 77, 58, 0.24);
+    border-radius: 999px;
+  }
+
+  .palette-card {
+    min-height: 158px;
+    scroll-snap-align: start;
   }
 }

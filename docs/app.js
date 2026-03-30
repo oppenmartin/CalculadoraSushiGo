@@ -13,78 +13,78 @@ const CARD_DEFS = {
     label: 'Maki 1',
     kind: 'maki',
     maki: 1,
-    asset: './assets/Maki1.jpeg',
+    asset: './assets/maki-1.jpeg',
     aliases: ['maki1', 'maki 1', 'maki x1', 'maki uno']
   },
   maki2: {
     label: 'Maki 2',
     kind: 'maki',
     maki: 2,
-    asset: './assets/Maki2.jpeg',
+    asset: './assets/maki-2.jpeg',
     aliases: ['maki2', 'maki 2', 'maki x2', 'maki dos']
   },
   maki3: {
     label: 'Maki 3',
     kind: 'maki',
     maki: 3,
-    asset: './assets/Maki3.jpeg',
+    asset: './assets/maki-3.jpeg',
     aliases: ['maki3', 'maki 3', 'maki x3', 'maki tres']
   },
   chopsticks: {
     label: 'Palillos',
     kind: 'utility',
-    asset: './assets/Palillos.jpeg',
+    asset: './assets/palillos.jpeg',
     aliases: ['palillos', 'chopsticks']
   },
   tempura: {
     label: 'Tempura',
     kind: 'set',
-    asset: './assets/Tempura.jpeg',
+    asset: './assets/tempura.jpeg',
     aliases: ['tempura']
   },
   sashimi: {
     label: 'Sashimi',
     kind: 'set',
-    asset: './assets/Sashimi.jpeg',
+    asset: './assets/sashimi.jpeg',
     aliases: ['sashimi']
   },
   gyoza: {
     label: 'Gyoza',
     kind: 'set',
-    asset: './assets/Gyoza.jpeg',
+    asset: './assets/gyoza.jpeg',
     aliases: ['gyoza']
   },
   wasabi: {
     label: 'Wasabi',
     kind: 'wasabi',
-    asset: './assets/Wasabi.jpeg',
+    asset: './assets/wasabi.jpeg',
     aliases: ['wasabi']
   },
   nigiri_egg: {
     label: 'Nigiri de tortilla',
     kind: 'nigiri',
     nigiri: 1,
-    asset: './assets/Niguiri huevo.jpeg',
+    asset: './assets/nigiri-tortilla.jpeg',
     aliases: ['nigiri de tortilla', 'nigiri tortilla', 'nigiri huevo', 'nigiri egg', 'tortilla', 'huevo']
   },
   nigiri_salmon: {
     label: 'Nigiri de salmon',
     kind: 'nigiri',
     nigiri: 2,
-    asset: './assets/Niguiri Salmon.jpeg',
+    asset: './assets/nigiri-salmon.jpeg',
     aliases: ['nigiri de salmon', 'nigiri salmon', 'salmon', 'salmon']
   },
   nigiri_squid: {
     label: 'Nigiri de calamar',
     kind: 'nigiri',
     nigiri: 3,
-    asset: './assets/Niguiri.jpeg',
+    asset: './assets/nigiri-calamar.jpeg',
     aliases: ['nigiri de calamar', 'nigiri calamar', 'calamar', 'squid']
   },
   pudding: {
     label: 'Pudin',
     kind: 'dessert',
-    asset: './assets/Postre.jpeg',
+    asset: './assets/pudin.jpeg',
     aliases: ['pudin', 'pudding', 'postre', 'postres']
   }
 };
@@ -140,11 +140,65 @@ function buildPlayers(names) {
     roundCards: Array.from({ length: TOTAL_ROUNDS }, () => []),
     roundScores: Array(TOTAL_ROUNDS).fill(0),
     roundNotes: Array(TOTAL_ROUNDS).fill(''),
+    roundBreakdowns: Array(TOTAL_ROUNDS).fill(''),
     puddings: 0,
     puddingScore: 0,
     subtotal: 0,
     total: 0
   }));
+}
+
+function pluralize(count, singular, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function formatNigiriBreakdown(detail) {
+  const label = CARD_DEFS[detail.cardId]?.label || detail.cardId;
+  return detail.withWasabi
+    ? `Wasabi + ${label} ${detail.points}pts`
+    : `${label} ${detail.points}pts`;
+}
+
+function buildRoundBreakdown(cards, result) {
+  if (!cards.length) {
+    return 'Sin cartas cargadas.';
+  }
+
+  const parts = [];
+
+  if (result.details.makiCardCount) {
+    parts.push(
+      `${pluralize(result.details.makiCardCount, 'Maki')} (${pluralize(result.maki, 'roll', 'rolls')}) ${
+        result.makiPoints
+      }pts`
+    );
+  }
+
+  if (result.details.tempuraPairs) {
+    parts.push(
+      `${pluralize(result.details.tempuraPairs * 2, 'tempura')} ${result.details.tempuraPoints}pts`
+    );
+  }
+
+  if (result.details.sashimiTrios) {
+    parts.push(
+      `${pluralize(result.details.sashimiTrios * 3, 'sashimi')} ${result.details.sashimiPoints}pts`
+    );
+  }
+
+  if (result.details.gyozaCount) {
+    parts.push(`${pluralize(result.details.gyozaCount, 'gyoza')} ${result.details.gyozaPoints}pts`);
+  }
+
+  result.details.nigiriBreakdown.forEach(detail => {
+    parts.push(formatNigiriBreakdown(detail));
+  });
+
+  if (!parts.length) {
+    return `No sumó puntos en la ronda = ${result.score}pts`;
+  }
+
+  return `${parts.join(' + ')} = ${result.score}pts`;
 }
 
 function countCards(cards) {
@@ -159,10 +213,16 @@ function scorePlayerRound(cards) {
   const counts = countCards(cards);
   let score = 0;
   const wasabiIndexes = [];
+  const tempuraPairs = Math.floor((counts.tempura || 0) / 2);
+  const sashimiTrios = Math.floor((counts.sashimi || 0) / 3);
+  const gyozaCount = counts.gyoza || 0;
+  const gyozaPoints = GYOZA_SCORES[Math.min(gyozaCount, 5)];
+  const nigiriBreakdown = [];
+  const makiCardCount = (counts.maki1 || 0) + (counts.maki2 || 0) + (counts.maki3 || 0);
 
-  score += Math.floor((counts.tempura || 0) / 2) * 5;
-  score += Math.floor((counts.sashimi || 0) / 3) * 10;
-  score += GYOZA_SCORES[Math.min(counts.gyoza || 0, 5)];
+  score += tempuraPairs * 5;
+  score += sashimiTrios * 10;
+  score += gyozaPoints;
 
   for (let index = 0; index < cards.length; index += 1) {
     const cardId = cards[index];
@@ -182,17 +242,31 @@ function scorePlayerRound(cards) {
 
     const usableWasabiIndex = wasabiIndexes.findIndex(wasabiIndex => wasabiIndex < index);
     if (usableWasabiIndex !== -1) {
-      score += card.nigiri * 3;
+      const points = card.nigiri * 3;
+      score += points;
+      nigiriBreakdown.push({ cardId, withWasabi: true, points });
       wasabiIndexes.splice(usableWasabiIndex, 1);
     } else {
       score += card.nigiri;
+      nigiriBreakdown.push({ cardId, withWasabi: false, points: card.nigiri });
     }
   }
 
   return {
     score,
     maki: (counts.maki1 || 0) + (counts.maki2 || 0) * 2 + (counts.maki3 || 0) * 3,
-    puddings: counts.pudding || 0
+    puddings: counts.pudding || 0,
+    makiPoints: 0,
+    details: {
+      tempuraPairs,
+      tempuraPoints: tempuraPairs * 5,
+      sashimiTrios,
+      sashimiPoints: sashimiTrios * 10,
+      gyozaCount,
+      gyozaPoints,
+      nigiriBreakdown,
+      makiCardCount
+    }
   };
 }
 
@@ -208,6 +282,7 @@ function applyMakiBonuses(roundResults) {
   const firstPoints = Math.floor(6 / first.length);
   first.forEach(result => {
     result.score += firstPoints;
+    result.makiPoints += firstPoints;
   });
 
   if (first.length > 1) {
@@ -223,11 +298,17 @@ function applyMakiBonuses(roundResults) {
   const secondPoints = Math.floor(3 / second.length);
   second.forEach(result => {
     result.score += secondPoints;
+    result.makiPoints += secondPoints;
   });
 }
 
 function computeScores() {
   state.players.forEach(player => {
+    player.roundBreakdowns = Array.isArray(player.roundBreakdowns)
+      ? Array(TOTAL_ROUNDS)
+          .fill('')
+          .map((_, index) => player.roundBreakdowns[index] || '')
+      : Array(TOTAL_ROUNDS).fill('');
     player.roundScores = Array(TOTAL_ROUNDS).fill(0);
     player.puddings = 0;
     player.puddingScore = 0;
@@ -252,6 +333,7 @@ function computeScores() {
       const player = state.players.find(item => item.id === result.playerId);
       player.roundScores[roundIndex] = result.score;
       player.puddings += result.puddings;
+      player.roundBreakdowns[roundIndex] = buildRoundBreakdown(player.roundCards[roundIndex] || [], result);
     });
   }
 
@@ -649,7 +731,7 @@ function renderBoard() {
         </div>
       </section>
 
-      <section class="scoreboard sketch-board card">
+      <section id="scoreboardSection" class="scoreboard sketch-board card">
         <div class="sketch-grid" style="--player-count:${state.players.length}">
           <div class="corner-cell"></div>
           ${state.players
@@ -713,6 +795,7 @@ function renderBoard() {
                     .map(
                       (cards, index) => `
                         <p><strong>Ronda ${index + 1}:</strong> ${escapeHtml(formatCards(cards))}</p>
+                        <p><strong>Puntaje:</strong> ${escapeHtml(player.roundBreakdowns?.[index] || 'Sin resumen todavía.')}</p>
                       `
                     )
                     .join('')}
@@ -898,14 +981,10 @@ function bindEvents() {
         list.innerHTML = renderSequenceCards(cards);
         if (options.scrollToEnd && cards.length) {
           requestAnimationFrame(() => {
-            const lastCard = list.querySelector('.sequence-card:last-of-type');
-            if (lastCard) {
-              lastCard.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-                inline: 'end'
-              });
-            }
+            list.scrollTo({
+              left: list.scrollWidth,
+              behavior: 'smooth'
+            });
           });
         }
       }
@@ -963,6 +1042,14 @@ function bindEvents() {
       const errorNode = document.querySelector('#scoringError');
       if (errorNode) {
         errorNode.textContent = error;
+      }
+      if (!error) {
+        requestAnimationFrame(() => {
+          document.querySelector('#scoreboardSection')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        });
       }
       if (submitButton) {
         submitButton.disabled = false;
