@@ -33,31 +33,31 @@ const CARD_DEFS = {
   chopsticks: {
     label: 'Palillos',
     kind: 'utility',
-    asset: './assets/palillos.jpeg',
+    asset: './assets/Palillos.jpeg',
     aliases: ['palillos', 'chopsticks']
   },
   tempura: {
     label: 'Tempura',
     kind: 'set',
-    asset: './assets/tempura.jpeg',
+    asset: './assets/Tempura.jpeg',
     aliases: ['tempura']
   },
   sashimi: {
     label: 'Sashimi',
     kind: 'set',
-    asset: './assets/sashimi.jpeg',
+    asset: './assets/Sashimi.jpeg',
     aliases: ['sashimi']
   },
   gyoza: {
     label: 'Gyoza',
     kind: 'set',
-    asset: './assets/gyoza.jpeg',
+    asset: './assets/Gyoza.jpeg',
     aliases: ['gyoza']
   },
   wasabi: {
     label: 'Wasabi',
     kind: 'wasabi',
-    asset: './assets/wasabi.jpeg',
+    asset: './assets/Wasabi.jpeg',
     aliases: ['wasabi']
   },
   nigiri_egg: {
@@ -153,7 +153,7 @@ function pluralize(count, singular, plural = `${singular}s`) {
 }
 
 function formatNigiriBreakdown(detail) {
-  const label = CARD_DEFS[detail.cardId]?.label || detail.cardId;
+  const label = (CARD_DEFS[detail.cardId] && CARD_DEFS[detail.cardId].label) || detail.cardId;
   return detail.withWasabi
     ? `Wasabi + ${label} ${detail.points}pts`
     : `${label} ${detail.points}pts`;
@@ -272,7 +272,7 @@ function scorePlayerRound(cards) {
 
 function applyMakiBonuses(roundResults) {
   const sorted = [...roundResults].sort((a, b) => b.maki - a.maki);
-  const topMaki = sorted[0]?.maki || 0;
+  const topMaki = (sorted[0] && sorted[0].maki) || 0;
 
   if (topMaki <= 0) {
     return;
@@ -289,7 +289,8 @@ function applyMakiBonuses(roundResults) {
     return;
   }
 
-  const secondMaki = sorted.find(result => result.maki < topMaki)?.maki || 0;
+  const secondResult = sorted.find(result => result.maki < topMaki);
+  const secondMaki = secondResult ? secondResult.maki : 0;
   if (secondMaki <= 0) {
     return;
   }
@@ -321,9 +322,7 @@ function computeScores() {
       const round = scorePlayerRound(player.roundCards[roundIndex] || []);
       return {
         playerId: player.id,
-        score: round.score,
-        maki: round.maki,
-        puddings: round.puddings
+        ...round
       };
     });
 
@@ -380,7 +379,10 @@ function getExpectedCardsPerPlayer() {
 
 function getNextRound() {
   for (let roundIndex = 0; roundIndex < TOTAL_ROUNDS; roundIndex += 1) {
-    const hasPendingPlayer = state.players.some(player => !player.roundCards[roundIndex]?.length);
+    const hasPendingPlayer = state.players.some(player => {
+      const roundCards = player.roundCards[roundIndex];
+      return !roundCards || !roundCards.length;
+    });
     if (hasPendingPlayer) {
       return roundIndex + 1;
     }
@@ -458,15 +460,16 @@ function parseCardsInput(value) {
     const normalized = normalizeAlias(rawCard);
     const cardId = Object.entries(CARD_DEFS).find(([, card]) => {
       return card.aliases.some(alias => normalizeAlias(alias) === normalized);
-    })?.[0];
+    });
+    const foundEntry = cardId ? cardId[0] : '';
 
-    if (!cardId) {
+    if (!foundEntry) {
       return {
         error: `No reconozco la carta "${rawCard}".`
       };
     }
 
-    parsed.push(cardId);
+    parsed.push(foundEntry);
   }
 
   return { cards: parsed };
@@ -476,7 +479,9 @@ function formatCards(cards) {
   if (!cards.length) {
     return '—';
   }
-  return cards.map(cardId => CARD_DEFS[cardId]?.label || cardId).join(', ');
+  return cards
+    .map(cardId => (CARD_DEFS[cardId] && CARD_DEFS[cardId].label) || cardId)
+    .join(', ');
 }
 
 function parseCardIdSequence(value) {
@@ -514,10 +519,10 @@ function renderSequenceCards(cards) {
           <span class="sequence-card-index">${index + 1}</span>
           <img
             class="sequence-card-thumb"
-            src="${CARD_DEFS[cardId]?.asset || ''}"
-            alt="${escapeHtml(CARD_DEFS[cardId]?.label || cardId)}"
+            src="${(CARD_DEFS[cardId] && CARD_DEFS[cardId].asset) || ''}"
+            alt="${escapeHtml((CARD_DEFS[cardId] && CARD_DEFS[cardId].label) || cardId)}"
           />
-          <span class="sequence-card-label">${escapeHtml(CARD_DEFS[cardId]?.label || cardId)}</span>
+          <span class="sequence-card-label">${escapeHtml((CARD_DEFS[cardId] && CARD_DEFS[cardId].label) || cardId)}</span>
         </button>
       `
     )
@@ -593,11 +598,11 @@ function resetGame(keepPlayers) {
 
 function escapeHtml(value) {
   return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function renderLanding() {
@@ -764,7 +769,7 @@ function renderBoard() {
                         ${
                           !row.isTotal && row.label !== 'Pudines'
                             ? `<div class="cell-meta">${
-                                (player.roundCards[Number(row.label.at(-1)) - 1] || []).length ? 'manual' : ''
+                                (player.roundCards[Number(row.label.slice(-1)) - 1] || []).length ? 'manual' : ''
                               }</div>`
                             : ''
                         }
@@ -795,7 +800,9 @@ function renderBoard() {
                     .map(
                       (cards, index) => `
                         <p><strong>Ronda ${index + 1}:</strong> ${escapeHtml(formatCards(cards))}</p>
-                        <p><strong>Puntaje:</strong> ${escapeHtml(player.roundBreakdowns?.[index] || 'Sin resumen todavía.')}</p>
+                        <p><strong>Puntaje:</strong> ${escapeHtml(
+                          (player.roundBreakdowns && player.roundBreakdowns[index]) || 'Sin resumen todavía.'
+                        )}</p>
                       `
                     )
                     .join('')}
@@ -972,7 +979,7 @@ function bindEvents() {
       const input = scoringForm.querySelector(`[data-sequence-input="${playerId}"]`);
       const list = scoringForm.querySelector(`[data-sequence-list="${playerId}"]`);
       const count = scoringForm.querySelector(`[data-sequence-count="${playerId}"]`);
-      const cards = String(input?.value || '')
+      const cards = String((input && input.value) || '')
         .split(',')
         .map(item => item.trim())
         .filter(Boolean);
@@ -1045,10 +1052,13 @@ function bindEvents() {
       }
       if (!error) {
         requestAnimationFrame(() => {
-          document.querySelector('#scoreboardSection')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
+          const scoreboard = document.querySelector('#scoreboardSection');
+          if (scoreboard) {
+            scoreboard.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
         });
       }
       if (submitButton) {
