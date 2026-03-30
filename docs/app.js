@@ -831,7 +831,7 @@ function renderPlayersForm() {
     <section class="setup card">
       <div class="section-head">
         <div>
-          <span class="eyebrow">Configuracion</span>
+          <span class="eyebrow">Configuración</span>
           <h2>Ingresá los nombres</h2>
         </div>
         <button type="button" class="ghost-btn" id="backToLanding">Volver</button>
@@ -854,6 +854,43 @@ function renderPlayersForm() {
         <button type="submit">Confirmar</button>
         <p id="playersError" class="error"></p>
       </form>
+    </section>
+  `;
+}
+
+function renderWinnerSummary() {
+  if (!allRoundsComplete()) {
+    return '';
+  }
+
+  const ranking = [...state.players].sort((a, b) => b.total - a.total);
+  const winners = ranking.filter(player => player.total === ranking[0].total);
+  const title =
+    winners.length > 1
+      ? `Empate entre ${winners.map(player => escapeHtml(player.name)).join(' y ')}`
+      : `${escapeHtml(winners[0].name)} ganó la partida`;
+
+  return `
+    <section class="winner-summary card">
+      <div class="winner-summary-head">
+        <span class="eyebrow">Resultado Final</span>
+        <h3>${title}</h3>
+        <p>Resumen final con puntajes totales y pudines incluidos.</p>
+      </div>
+      <div class="winner-podium">
+        ${ranking
+          .map(
+            (player, index) => `
+              <article class="winner-podium-card ${index === 0 ? 'winner-podium-card-top' : ''}">
+                <span class="winner-place">${index + 1}</span>
+                <strong>${escapeHtml(player.name)}</strong>
+                <span>${player.total} pts</span>
+                <small>Subtotal ${player.subtotal} · Pudines ${player.puddingScore >= 0 ? '+' : ''}${player.puddingScore}</small>
+              </article>
+            `
+          )
+          .join('')}
+      </div>
     </section>
   `;
 }
@@ -894,8 +931,8 @@ function renderBoard() {
     <section class="board-shell">
       <div class="board-header">
         <div>
-          <span class="eyebrow">Partida en curso</span>
-          <h2>Tablero de puntuacion</h2>
+          <span class="eyebrow">Partida en Curso</span>
+          <h2>Tablero de Puntuación</h2>
         </div>
         <div class="header-actions">
           <button type="button" class="ghost-btn" id="samePlayers">Reiniciar con mismos jugadores</button>
@@ -903,13 +940,15 @@ function renderBoard() {
         </div>
       </div>
 
+      ${renderWinnerSummary()}
+
       <section class="status-strip card">
         <div>
           <strong>Jugadores</strong>
           <span>${state.players.length}</span>
         </div>
         <div>
-          <strong>Cartas por ronda</strong>
+          <strong>Cartas por Ronda</strong>
           <span>${getExpectedCardsPerPlayer()}</span>
         </div>
         <div>
@@ -1007,7 +1046,7 @@ function renderBoard() {
           <div class="section-head compact">
             <div>
               <span class="eyebrow">Carga de jugadas</span>
-              <h3>Calcular puntos</h3>
+              <h3>Calcular Puntos</h3>
             </div>
             ${
               nextRound
@@ -1021,7 +1060,7 @@ function renderBoard() {
                     }).join('')}
                   </select>
                 `
-                : '<span class="chip done">Rondas completas</span>'
+                : '<span class="chip done">Rondas Completas</span>'
             }
           </div>
           <p class="support-copy">
@@ -1074,7 +1113,7 @@ function renderBoard() {
               `
               : `
                 <div class="finished-state">
-                  <p>Las 3 rondas ya estan cargadas. El tablero ya muestra el total final incluyendo pudines.</p>
+                  <p>Las 3 rondas ya están cargadas. El tablero ya muestra el total final incluyendo pudines.</p>
                 </div>
               `
           }
@@ -1090,12 +1129,12 @@ function renderBoard() {
           <ul class="help-list">
             <li>Elegí las cartas tocando las miniaturas, en el orden en que aparecieron.</li>
             <li>Tempura: cada pareja suma 5.</li>
-            <li>Sashimi: cada trio suma 10.</li>
+            <li>Sashimi: cada trío suma 10.</li>
             <li>Gyoza: 1, 3, 6, 10, 15.</li>
-            <li>Maki: 6 al primero, 3 al segundo, con division entera en empates.</li>
-            <li>Nigiri + Wasabi: se resuelve segun el orden de izquierda a derecha.</li>
-            <li>Pudin: cuenta al final; mas suma 6 y menos resta 6, con division entera en empates.</li>
-            <li>Palillos: se reconocen pero no puntuan.</li>
+            <li>Maki: 6 al primero, 3 al segundo, con división entera en empates.</li>
+            <li>Nigiri + Wasabi: se resuelve según el orden de izquierda a derecha.</li>
+            <li>Pudín: cuenta al final; más suma 6 y menos resta 6, con división entera en empates.</li>
+            <li>Palillos: se reconocen pero no puntúan.</li>
           </ul>
         </section>
       </section>

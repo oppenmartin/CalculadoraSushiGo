@@ -479,6 +479,63 @@ th {
   padding: 1.4rem;
 }
 
+.winner-summary {
+  display: grid;
+  gap: 1rem;
+  padding: 1.4rem;
+  margin-bottom: 1.1rem;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 220, 0.95), rgba(255, 236, 196, 0.82)),
+    var(--panel);
+}
+
+.winner-summary-head h3 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+}
+
+.winner-summary-head p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.winner-podium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+}
+
+.winner-podium-card {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(101, 77, 58, 0.12);
+}
+
+.winner-podium-card-top {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(208, 77, 52, 0.22);
+  box-shadow: 0 12px 26px rgba(159, 56, 37, 0.12);
+}
+
+.winner-place {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(208, 77, 52, 0.12);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.winner-podium-card small {
+  color: var(--muted);
+}
+
 .round-notes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
