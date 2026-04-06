@@ -285,10 +285,10 @@ function buildRoundBreakdown(cards, result) {
   });
 
   if (!parts.length) {
-    return `No sumó puntos en la ronda = ${result.score}pts`;
+    return `Sin puntos en la ronda = ${result.score} pts`;
   }
 
-  return `${parts.join(' + ')} = ${result.score}pts`;
+  return `${parts.join(' + ')} = ${result.score} pts`;
 }
 
 function renderBreakdownCardIcons(cardIds) {
@@ -358,7 +358,7 @@ function renderRoundBreakdownHtml(player, index) {
   const total = player.roundScores[index] || 0;
 
   if (!items.length) {
-    return '<span class="breakdown-empty">Sin resumen todavía.</span>';
+    return '<span class="breakdown-empty">Sin puntaje registrado.</span>';
   }
 
   return `
@@ -376,7 +376,7 @@ function renderRoundBreakdownHtml(player, index) {
         )
         .join('<span class="breakdown-separator">+</span>')}
       <span class="breakdown-separator">=</span>
-      <strong class="breakdown-total">${total}pts</strong>
+      <strong class="breakdown-total">${total} pts</strong>
     </span>
   `;
 }
@@ -695,7 +695,7 @@ function renderPuddingIcons(count) {
 
 function renderSequenceCards(cards) {
   if (!cards.length) {
-    return '<p class="sequence-empty">Todavía no cargaste cartas.</p>';
+    return '<p class="sequence-empty">Todavía no hay cartas cargadas.</p>';
   }
 
   return cards
@@ -819,7 +819,7 @@ function renderLanding() {
       <div class="hero-art card">
         <img class="cover-image" src="./assets/sushi-go-cover.jpg" alt="Portada de Sushi Go" />
         <p class="art-caption">
-          Portada original del juego.
+          Portada del juego.
         </p>
       </div>
     </section>
@@ -931,11 +931,11 @@ function renderBoard() {
     <section class="board-shell">
       <div class="board-header">
         <div>
-          <span class="eyebrow">Partida en Curso</span>
+          <span class="eyebrow">Partida</span>
           <h2>Tablero de Puntuación</h2>
         </div>
         <div class="header-actions">
-          <button type="button" class="ghost-btn" id="samePlayers">Reiniciar con mismos jugadores</button>
+          <button type="button" class="ghost-btn" id="samePlayers">Reiniciar con los mismos jugadores</button>
           <button type="button" id="newMatch">Nueva partida</button>
         </div>
       </div>
@@ -957,7 +957,7 @@ function renderBoard() {
         </div>
         <div>
           <strong>Ganador</strong>
-          <span>${winners.length && allRoundsComplete() ? winners.map(player => escapeHtml(player.name)).join(', ') : 'A definir'}</span>
+          <span>${winners.length && allRoundsComplete() ? winners.map(player => escapeHtml(player.name)).join(', ') : 'Pendiente'}</span>
         </div>
       </section>
 
@@ -991,13 +991,6 @@ function renderBoard() {
                             ? `<div class="cell-icons">${renderPuddingIcons(puddingIcons)}</div>`
                             : ''
                         }
-                        ${
-                          !row.isTotal && row.label !== 'Pudines'
-                            ? `<div class="cell-meta">${
-                                (player.roundCards[Number(row.label.slice(-1)) - 1] || []).length ? 'manual' : ''
-                              }</div>`
-                            : ''
-                        }
                       </div>
                     `;
                   })
@@ -1012,7 +1005,7 @@ function renderBoard() {
         <div class="section-head compact">
           <div>
             <span class="eyebrow">Detalle</span>
-            <h3>Cartas cargadas por ronda</h3>
+            <h3>Resumen por ronda</h3>
           </div>
         </div>
         <div class="round-notes-grid">
@@ -1045,8 +1038,8 @@ function renderBoard() {
         <section class="card scoring-card">
           <div class="section-head compact">
             <div>
-              <span class="eyebrow">Carga de jugadas</span>
-              <h3>Calcular Puntos</h3>
+              <span class="eyebrow">Carga</span>
+              <h3>Cargar ronda</h3>
             </div>
             ${
               nextRound
@@ -1060,11 +1053,11 @@ function renderBoard() {
                     }).join('')}
                   </select>
                 `
-                : '<span class="chip done">Rondas Completas</span>'
+                : '<span class="chip done">Partida completa</span>'
             }
           </div>
           <p class="support-copy">
-            Cargá toda la secuencia tocando la paleta visual. Esta es la única forma de carga para que el flujo sea más rápido y confiable.
+            Cargá la secuencia tocando la paleta visual.
           </p>
           <p class="support-copy">
             El orden importa: izquierda a derecha en fila, o por filas de arriba hacia abajo en matriz.
@@ -1113,7 +1106,7 @@ function renderBoard() {
               `
               : `
                 <div class="finished-state">
-                  <p>Las 3 rondas ya están cargadas. El tablero ya muestra el total final incluyendo pudines.</p>
+                  <p>Las 3 rondas ya están cargadas. El tablero ya muestra el resultado final con pudines incluidos.</p>
                 </div>
               `
           }
@@ -1123,7 +1116,7 @@ function renderBoard() {
           <div class="section-head compact">
             <div>
               <span class="eyebrow">Referencia</span>
-              <h3>Reglas cargadas</h3>
+              <h3>Resumen de puntaje</h3>
             </div>
           </div>
           <ul class="help-list">
