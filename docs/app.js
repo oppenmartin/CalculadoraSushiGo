@@ -818,9 +818,6 @@ function renderLanding() {
       </div>
       <div class="hero-art card">
         <img class="cover-image" src="./assets/sushi-go-cover.jpg" alt="Portada de Sushi Go" />
-        <p class="art-caption">
-          Portada del juego.
-        </p>
       </div>
     </section>
   `;
@@ -875,7 +872,7 @@ function renderWinnerSummary() {
       <div class="winner-summary-head">
         <span class="eyebrow">Resultado Final</span>
         <h3>${title}</h3>
-        <p>Resumen final con puntajes totales y pudines incluidos.</p>
+        <p>Puntajes finales con el ajuste de pudines incluido.</p>
       </div>
       <div class="winner-podium">
         ${ranking
@@ -957,7 +954,7 @@ function renderBoard() {
         </div>
         <div>
           <strong>Ganador</strong>
-          <span>${winners.length && allRoundsComplete() ? winners.map(player => escapeHtml(player.name)).join(', ') : 'Pendiente'}</span>
+          <span>${winners.length && allRoundsComplete() ? winners.map(player => escapeHtml(player.name)).join(', ') : 'Por definirse'}</span>
         </div>
       </section>
 
@@ -1057,7 +1054,7 @@ function renderBoard() {
             }
           </div>
           <p class="support-copy">
-            Cargá la secuencia tocando la paleta visual.
+            Cargá la secuencia tocando las cartas de la paleta.
           </p>
           <p class="support-copy">
             El orden importa: izquierda a derecha en fila, o por filas de arriba hacia abajo en matriz.
@@ -1106,7 +1103,7 @@ function renderBoard() {
               `
               : `
                 <div class="finished-state">
-                  <p>Las 3 rondas ya están cargadas. El tablero ya muestra el resultado final con pudines incluidos.</p>
+                  <p>La partida ya está completa. El tablero muestra el resultado final con pudines incluidos.</p>
                 </div>
               `
           }
