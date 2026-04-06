@@ -68,7 +68,7 @@ const CARD_DEFS = {
     aliases: ['nigiri de tortilla', 'nigiri tortilla', 'nigiri huevo', 'nigiri egg', 'tortilla', 'huevo']
   },
   nigiri_salmon: {
-    label: 'Nigiri de Salmon',
+    label: 'Nigiri de Salmón',
     kind: 'nigiri',
     nigiri: 2,
     asset: './assets/nigiri-salmon.jpeg',
@@ -82,10 +82,10 @@ const CARD_DEFS = {
     aliases: ['nigiri de calamar', 'nigiri calamar', 'calamar', 'squid']
   },
   pudding: {
-    label: 'Pudin',
+    label: 'Pudín',
     kind: 'dessert',
     asset: './assets/pudin.jpeg',
-    aliases: ['pudin', 'pudding', 'postre', 'postres']
+    aliases: ['pudín', 'pudin', 'pudding', 'postre', 'postres']
   }
 };
 
